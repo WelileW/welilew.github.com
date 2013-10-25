@@ -14,7 +14,7 @@
 		$im = imagecreatefromjpg($img[j]);
 		$glim[$j] = imagecreate(100 , 100);
 		$glim[$j] = $im;
-		$Random = rand(3,8);
+		$Random = rand(2,8);
 		
 		for ($i = 0; $i < $Random ; $i++)
 		{
