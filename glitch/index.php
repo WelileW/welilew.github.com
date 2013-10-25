@@ -4,28 +4,57 @@
  </head>
 <body>
 <?php
-	function glitch($img , $n) 
+	function glitch($img) 
   {
-/* Так как, к сожелению, почему-то Zend не хочет работать с jpg(а именно в нем приходят изображенияиз vk),
- приходится вынужденно сохранять на сервер фотографии. Таким образом мы переводим их из jpg в gif, родной библеотеке gd */
- //   header("Content-Type: image/gif");
-	copy($img , './' . $n . '.gif');
-	$im = imagecreatefromgif('./' . $n . '.gif');
-	
-	$Rh = rand(3,8);
-	for ($i = 0; $i < $Rh ; $i++)
-	{
-		$RH = rand(20,80);
-		$Rw = rand(0,50);
-		imagecopymerge($im, $im, $Rw , $RH , 0 , $RH , 100-$Rw , $RH , 10);
+ //  header("Content-Type: image/jpg");
+/* Так как в процессе теста данной функции последний член массива всегда был некорректный(по непонятным причинам), 
+мы добавляем еще 1 элемент. Он нам абсолютно не нужен. Он просто возьмет статус valid Image resource и канет в Лету. */
+	$img[25] = $img[0];
+	for ($j = 0; $j < 26 ; $j++){
+		$im = imagecreatefromjpg($img[j]);
+		$glim[$j] = imagecreate(100 , 100);
+		$glim[$j] = $im;
+		$Random = rand(3,8);
+		
+		for ($i = 0; $i < $Random ; $i++)
+		{
+		
+			$gim = imagecreate(100 , 100);
+			$Rh = rand(20 , 80);
+			$Rw = rand(0 , 40);
+			imagecopy($gim, $im, $Rw , 100-$Rh , 0 , 100-$Rh , 100-$Rw , $Rh);  // Берется кусочек изображения
+
+			$G = rand(0 , 100);
+			imagefilter($gim, IMG_FILTER_COLORIZE, 0, $G, 0);  // Немного изменяется и ->
+			imagecopymerge($glim[$j] , $gim, $Rw, 100-$Rh, $Rw, 100-$Rh, 100-$Rw , $Rh, 80);  // Наносится водяной знак. На мой взгляд вполне глитч)
+			imagedestroy($gim);
+			
+		}
 	}
-	imagegif( $im , './' . $n . '.gif');
-	return('./' . $n . '.gif');
+	imagedestroy($im);
+/* Соберем все в одну большую картинку */
+	$glitch = imagecreate(560 , 560);
+	$background = imagecolorallocate($glitch , 255 , 255 , 255 );
+	$black = imagecolorallocate($glitch, 0, 0, 0);
+	for ($i = 4; $i >= 0; $i--){
+		for ($j = 4; $j >=0; $j--){
+			imagefilledrectangle($glitch , $i*114 , $j*114 , $i*114+103 , $j*114+103 , $black); // Строим рамки
+			imagecopy($glitch , $glim[$i*5+$j], $i*114+2, $j*114+2, 0, 0, 100 , 100);  // Вставляем картинки в рамки
+		}
+	}
+
+	imagegif( $glitch , './glitch.gif');
+			for ($i = 0; $i < 3; $i++)
+		{
+			imagedestroy($glim[$i]);
+		}
+	imagedestroy($glitch);
+	return('./glitch.gif');
   }
 /* Данные, полученные при регистрации приложения */
 	$client_id = '3943201'; //ID приложения
 	$client_secret = 'l3C13V5jirZz6aOFMLLr'; // Ключ
-	$redirect_uri = 'http://localhost/glitch/em'; // Собственно адрес нашего сайта
+	$redirect_uri = 'http://localhost/glitch'; // Собственно адрес нашего сайта
 
 /* Формируем данные для запроса vk */
 	$url = 'http://oauth.vk.com/authorize';
@@ -44,6 +73,9 @@
 			'client_secret'	=> $client_secret,
 			'code'			=> $_GET['code'],
 			'display'		=> 'page',
+			
+			'scope'			=> 'wall,photos',
+			
 			'redirect_uri'	=> $redirect_uri
 		);
 		
@@ -66,10 +98,10 @@
 			'?' . urldecode(http_build_query($params))), 
 			true);
 			$IdFriend = $IdFriends['response'];
-	
 			
 	/* Перебор друзей, создание массива с их фотографиями */
-			for($i = 0 ; $i < 25 ; $i++){
+			for($i = 0 ; $i < 25 ; $i++)
+			{
 				 $params = array(
 					'uids'			=> $IdFriend[$i],
 					'fields'		=> 'photo_100',
@@ -78,30 +110,23 @@
 				$Foto[$i] = json_decode(file_get_contents(
 				'https://api.vk.com/method/users.get'
 				. '?' . urldecode(http_build_query($params))), true);
-				$GFoto[$i] = $Foto[$i]['response'][0][$n];
-				$GFoto[$i] = glitch($GFoto[$i] , $i);
-				
+				$GFoto[$i] = $Foto[$i]['response'][0]['photo_100'];		
 			}
-	/* Оформление картинок в виде плитки по 5 штук в строке и столбце */
-			
-			for($i = 0; $i < 5 ; $i++){
-				for($j = 0; $j < 5 ; $j++){
-					$c = $i*5+$j;
-					echo '<img src="' . $GFoto[$c] . '" 
-					hspace="4" vspace="20" border="2"/>';
-				}
-				echo '<br>';
-			}
-		//echo '<img src="' . $Foto[0]['response'][0]["photo_100"] . '" />';
-
+						
+			$Glitch = glitch($GFoto);  // Делаем из 25 обычных фото маленький коллаж
+			echo '<img src="' . $Glitch . '"/>';
 		}
 	}
 	
-	
 	else{
-
 		
 /* Если code нет, то получаем его */
+
+		$Hello = imagecreate(155 , 50);
+		$background = imagecolorallocate($Hello , 0 , 50 , 0 );
+		$col = imagecolorallocate($Hello, 255, 255, 255);
+		imagefttext ( $Hello , 30 , 0 , 5 , 40 , $col , './arial.ttf' , 'GLITCH' );
+		imagepng($Hello, '1.png');
 		echo '<p align="center">';
 		echo $link = '<a 
 		href="' . $url . '?' . urldecode(http_build_query($params)) . '"
@@ -110,11 +135,7 @@
 // В результате мы получили code:  - он нужен, чтобы получить token
 //  http://localhost/glitch?code=480d0308c272cbe4e0
 
-	}
-	
-	
-	
-	
+	}	
 
 ?>
 </body>
