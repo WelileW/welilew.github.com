@@ -117,7 +117,9 @@
 			}
 						
 			$Glitch = glitch($GFoto);  // Делаем из 25 обычных фото маленький коллаж
+			echo '<p align="center">';
 			echo '<img src="' . $Glitch . '"/>';
+			echo '</p>';
 		}
 	}
 	
