@@ -130,7 +130,7 @@
 		echo '<p align="center">';
 		echo $link = '<a 
 		href="' . $url . '?' . urldecode(http_build_query($params)) . '"
-		><img src="1.png" vspace="400"></a>';
+		><img src="1.png" vspace="300"></a>';
 		echo '</p>';
 // В результате мы получили code:  - он нужен, чтобы получить token
 //  http://localhost/glitch?code=480d0308c272cbe4e0
